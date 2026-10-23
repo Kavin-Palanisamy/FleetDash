@@ -1,0 +1,15 @@
+/* Base styles only. TODO (Week 1): design the real dashboard look. */
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, sans-serif; background: #f4f5f7; color: #1c1f23; }
+.nav { display: flex; gap: 16px; align-items: center; padding: 12px 20px; background: #14213d; color: #fff; }
+.nav a { color: #fff; text-decoration: none; }
+.page { padding: 20px; max-width: 1200px; margin: 0 auto; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.card { background: #fff; padding: 14px; border-radius: 8px; border: 1px solid #dde1e6; }
+.grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+@media (max-width: 800px) { .grid { grid-template-columns: 1fr; } }
+table { width: 100%; border-collapse: collapse; background: #fff; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e5e7eb; }
+.badge { padding: 2px 8px; border-radius: 10px; font-size: 12px; color: #fff; }
+.ok { background: #2e7d32; } .warn { background: #c62828; } .off { background: #757575; }
+.map { height: 400px; border-radius: 8px; }
