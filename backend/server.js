@@ -1,0 +1,20 @@
+import http from 'http';
+import { Server } from 'socket.io';
+import app from './src/app.js';
+import { env } from './src/config/env.js';
+import { connectDB } from './src/config/db.js';
+import { initSocket } from './src/sockets/socket.js';
+import { startFlushTimer } from './src/services/telemetryBuffer.js';
+import { startOfflineMonitor } from './src/services/offlineMonitor.js';
+import { loadVehicles } from './src/services/vehicleCache.js';
+import { logger } from './src/utils/logger.js';
+
+await connectDB();
+await loadVehicles();
+const server = http.createServer(app);
+const io = new Server(server, { cors: { origin: env.clientOrigin } });
+initSocket(io);
+app.set('io', io);
+startFlushTimer();
+startOfflineMonitor(io);
+server.listen(env.port, () => logger.info(`FleetDash backend on :${env.port}`));
