@@ -1,0 +1,8 @@
+{
+  "folders": [
+    { "name": "backend", "path": "backend" },
+    { "name": "frontend", "path": "frontend" },
+    { "name": "simulator", "path": "simulator" },
+    { "name": "docs", "path": "docs" }
+  ]
+}
