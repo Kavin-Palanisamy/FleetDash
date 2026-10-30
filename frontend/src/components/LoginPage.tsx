@@ -65,7 +65,7 @@ function validatePassword(value: string): string | undefined {
 
 /* ----------------------- Fleet visual (SVG) --------------------- */
 
-function FleetVisual() {
+export function FleetVisual() {
   return (
     <div className="fd-visual" aria-hidden="true">
       <svg
@@ -185,7 +185,7 @@ interface FieldProps {
   onBlur?: () => void;
 }
 
-function Field({
+export function Field({
   label,
   name,
   type,
@@ -475,11 +475,18 @@ export default function LoginPage({ onLogin, onSignUp }: LoginPageProps) {
           </div>
 
           <p className="fd-card__footer">
-            Don&apos;t have an account?{" "}
-            <a className="fd-link" href="/signup" onClick={handleSignUp}>
-              Sign up
-            </a>
-          </p>
+         Don&apos;t have an account?{" "}
+          <a
+           className="fd-link"
+          href="/signup"
+          onClick={(e) => {
+           e.preventDefault();
+          navigate("/signup");
+        }}
+  >
+    Sign up
+  </a>
+</p>
         </div>
       </main>
     </div>

@@ -5,6 +5,7 @@ import Dashboard from './pages/Dashboard.jsx';
 import VehicleDetails from './pages/VehicleDetails.jsx';
 import AlertsPage from './pages/AlertsPage.jsx';
 import LoginPage from './components/LoginPage.tsx';
+import SignUpPage from './components/SignUpPage.tsx';
 
 function DashboardLayout() {
   return (
@@ -22,6 +23,9 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LoginPage />} />
       <Route path="/login" element={<LoginPage />} />
+
+      {/* Signup page */}
+      <Route path="/signup" element={<SignUpPage />} />
 
       <Route element={<DashboardLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
