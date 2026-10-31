@@ -6,8 +6,12 @@ const vehicles = new Map(); // vehicleId -> plain object (with latest state)
 export async function loadVehicles() {
   let list = await Vehicle.find().lean();
   if (list.length === 0) {
-    const defaultVehicles = Array.from({ length: 5 }, (_, i) => ({
-      vehicleId: `BUS${101 + i}`, name: `Bus ${101 + i}`, type: 'bus', speedLimit: 80,
+    const count = Number(process.env.INITIAL_VEHICLE_COUNT) || 5;
+    const defaultVehicles = Array.from({ length: count }, (_, i) => ({
+      vehicleId: `BUS${101 + i}`,
+      name: `Bus ${101 + i}`,
+      type: 'bus',
+      speedLimit: 80,
     }));
     await Vehicle.insertMany(defaultVehicles);
     list = await Vehicle.find().lean();
@@ -15,6 +19,7 @@ export async function loadVehicles() {
   }
   list.forEach((v) => vehicles.set(v.vehicleId, v));
 }
+
 export const getVehicle = (id) => vehicles.get(id);
 export const getAllVehicles = () => [...vehicles.values()];
 export const setVehicle = (id, v) => vehicles.set(id, v);
