@@ -44,10 +44,10 @@
 ## Core Architectural Decisions
 
 ### 1. Zero Per-Event Database Writes
-- **Problem**: Writing to disk/database for every incoming GPS tick saturates connection pools and creates massive I/O bottlenecks under high vehicle concurrency.
+- **Problem**: Writing to disk/database for every incoming GPS tick saturates connection pools and creates I/O bottlenecks under concurrent vehicle updates.
 - **Solution**:
-  - **Latest Vehicle State**: Kept in an in-memory `Map` (`vehicleCache.js`). All dashboard reads (`GET /api/vehicles`) serve directly from RAM in sub-millisecond time.
-  - **Telemetry History**: Appended to an in-memory batch buffer (`telemetryBuffer.js`). Every 2 seconds (`BATCH_FLUSH_MS`), a single atomic `insertMany` write flushes up to hundreds of events in one roundtrip.
+  - **Latest Vehicle State**: Kept in an in-memory `Map` (`vehicleCache.js`). All dashboard reads (`GET /api/vehicles`) serve directly from RAM with minimal overhead (server processing ~0.2 to 1.1 ms).
+  - **Telemetry History**: Appended to an in-memory batch buffer (`telemetryBuffer.js`). Every 2 seconds (`BATCH_FLUSH_MS`), a single atomic `insertMany` write flushes accumulated events in one roundtrip.
   - **Alerts**: Alerts are rare and critical, so they are saved immediately to MongoDB and broadcast via Socket.IO.
 
 ### 2. Resilient Flush & Memory Bounding
