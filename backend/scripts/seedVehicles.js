@@ -10,8 +10,9 @@ const speedLimit = Number(process.env.DEFAULT_SPEED_LIMIT) || 80;
 try {
   await mongoose.connect(env.mongoUri, { serverSelectionTimeoutMS: 3000 });
 } catch (err) {
-  console.log(`MongoDB not running at ${env.mongoUri}. If using embedded memory DB, vehicles are seeded automatically by the server.`);
-  process.exit(0);
+  console.error(`Error: Could not connect to MongoDB at ${env.mongoUri}: ${err.message}`);
+  console.error('Ensure MongoDB is running before executing the seed script.');
+  process.exit(1);
 }
 
 try {

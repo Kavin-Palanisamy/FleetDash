@@ -3,7 +3,7 @@ import { Server } from 'socket.io';
 import mongoose from 'mongoose';
 import app from './src/app.js';
 import { env } from './src/config/env.js';
-import { connectDB } from './src/config/db.js';
+import { connectDB, stopDB } from './src/config/db.js';
 import { initSocket } from './src/sockets/socket.js';
 import { startFlushTimer, stopFlushTimer, flush } from './src/services/telemetryBuffer.js';
 import { startOfflineMonitor, stopOfflineMonitor } from './src/services/offlineMonitor.js';
@@ -61,6 +61,7 @@ async function gracefulShutdown(signal) {
     // 4. Disconnect database
     try {
       await mongoose.disconnect();
+      await stopDB();
       logger.info('MongoDB disconnected cleanly');
     } catch (err) {
       logger.error('Error disconnecting MongoDB:', err.message);
