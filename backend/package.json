@@ -8,7 +8,9 @@
     "start": "node server.js",
     "seed": "node scripts/seedVehicles.js",
     "mem-db": "node scripts/startMemoryDb.js",
-    "test": "node --test tests/*.test.js"
+    "lint": "eslint .",
+    "test": "node --test tests/validate.test.js tests/pipeline.test.js tests/buffer.test.js tests/offline.test.js tests/trips.test.js tests/geo.test.js tests/metrics.test.js",
+    "test:integration": "node --test tests/api.integration.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -20,6 +22,8 @@
     "socket.io": "^4.7.5"
   },
   "devDependencies": {
-    "mongodb-memory-server": "^11.3.0"
+    "eslint": "^10.14.0",
+    "mongodb-memory-server": "^11.3.0",
+    "supertest": "^7.3.1"
   }
 }

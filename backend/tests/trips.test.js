@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert';
 import {
   updateTrip,
-  completeTrip,
   getActiveTrip,
   resetTrips,
 } from '../src/services/tripService.js';

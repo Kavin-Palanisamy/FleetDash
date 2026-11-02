@@ -23,3 +23,5 @@ export async function loadVehicles() {
 export const getVehicle = (id) => vehicles.get(id);
 export const getAllVehicles = () => [...vehicles.values()];
 export const setVehicle = (id, v) => vehicles.set(id, v);
+export const clearCache = () => vehicles.clear();
+
