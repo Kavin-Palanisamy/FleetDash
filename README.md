@@ -41,7 +41,7 @@ fleetdash/
 
 ## Quickstart
 
-### 1. Backend Setup & Run
+### 1. Backend Setup & Run (Local)
 ```bash
 cd backend
 cp .env.example .env
@@ -57,25 +57,50 @@ npm start
 ```
 *Backend runs on `http://localhost:5000`.*
 
-### 2. Run Tests
-The backend test suite uses Node.js built-in `node:test` runner with fast in-memory mocks:
+### 2. Run with Docker
+You can run the entire backend and a real MongoDB service containerized using Docker Compose:
 ```bash
-cd backend
-npm test
+# Start MongoDB and FleetDash backend:
+docker compose up -d
+
+# Seed initial vehicles into containerized database:
+docker compose exec backend node scripts/seedVehicles.js 5
+
+# Check health and view logs:
+docker compose ps
+docker compose logs -f backend
+
+# Stop services:
+docker compose down
 ```
 
-### 3. Simulator & Load Testing
+### 3. Run Tests
+The backend test suite is split into fast unit tests and comprehensive API integration tests:
+```bash
+cd backend
+
+# Fast in-memory unit tests (~2s):
+npm test
+
+# API integration tests with in-memory MongoDB & Supertest:
+npm run test:integration
+```
+
+### 4. Simulator & Load Testing
 ```bash
 # Continuous vehicle telemetry simulation:
 cd simulator
 npm start
+
+# Run end-to-end latency probe:
+node latencyProbe.js
 
 # Run multi-stage load test (ramps through 5, 50, 200, 500 vehicles):
 # Make sure RATE_LIMIT_ENABLED=false is set on the backend during test
 node loadTest.js
 ```
 
-### 4. Frontend (Separate Terminal)
+### 5. Frontend (Separate Terminal)
 ```bash
 cd frontend
 cp .env.example .env
