@@ -67,7 +67,7 @@ node loadTest.js
 
 ---
 
-## 3. Measured Load Test Results
+## 3. Measured Ingest Load Test Results (In-Memory MongoDB Mode)
 
 ### Test Environment
 - **Date**: 2026-11-02
@@ -98,7 +98,7 @@ $env:STAGE_DURATION_SEC="30"
 node loadTest.js
 ```
 
-### Measured Performance Table (30s per stage)
+### Measured Performance Table — In-Memory MongoDB (30s per stage)
 
 | Vehicles | Events Sent | Events Accepted | Throughput (evt/s) | 429 Count | Other Errors | Error Rate | Client Avg Latency | Client p95 Latency | Server p95 Processing | Server Buffer Peak | Peak Memory (RSS) |
 |:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
@@ -113,3 +113,35 @@ node loadTest.js
 - **Client-Side Latency**: Client round-trip p95 latency remained under 100 ms for up to 50 vehicles, rising to 186 ms at 200 vehicles and 578 ms at 500 concurrent vehicles due to HTTP/1.1 socket connection pooling and event-loop scheduling on 4 physical CPU cores.
 - **Memory Consumption**: Memory RSS scaled predictably from 79 MB at idle/low load to 222 MB during the 500-vehicle stage under continuous telemetry streaming.
 - **Buffer Drain**: The batch flush mechanism (`BATCH_FLUSH_MS = 2000`) drained to 0 queue depth between flushes without accumulating a backlog.
+
+---
+
+## 4. Real MongoDB Benchmark Status
+
+- **Configured URI**: `mongodb://127.0.0.1:27017/fleetdash` (`USE_IN_MEMORY_DB=false`)
+- **Connection Probe Result**: `TCP connect to (127.0.0.1 : 27017) failed` (`TcpTestSucceeded: False`).
+- **Installed Status**: No standalone MongoDB system service or daemon process is installed on this Windows environment (`C:\Program Files\MongoDB` not present; `Get-Service *mongo*` empty).
+- **Status**: **Halted without fabricated results.** Per instructions, benchmarks against external/real MongoDB were not run because a real instance was unreachable. All verified benchmarks in this document were conducted using the documented in-memory MongoDB runner.
+
+---
+
+## 5. Measured End-to-End Latency (`simulator/latencyProbe.js`)
+
+Measures the complete real-time pipeline latency from the moment an event is timestamped by the simulator, through HTTP transmission, backend validation and processing, in-memory queuing, and WebSocket broadcast back to a connected Socket.IO client listening on `telemetry:update`.
+
+### Limitation & Methodology
+> [!NOTE]
+> **Clock Synchronization**: Both the simulator and the latency probe run on the same physical host machine. Because they share the local system clock, the measured time delta (`Date.now() - new Date(event.timestamp).getTime()`) measures real round-trip transit time without clock drift error.
+
+### Measured Results (30 Seconds Per Concurrency Level)
+
+| Vehicle Count | Samples Captured | Average Latency | p50 (Median) | p95 Latency | Max Latency |
+|:---:|:---:|:---:|:---:|:---:|:---:|
+| **5 vehicles** | 75 | 14.36 ms | 14.00 ms | 21.00 ms | 25.00 ms |
+| **50 vehicles** | 750 | 38.62 ms | 35.00 ms | 84.00 ms | 108.00 ms |
+
+### Analysis
+- At 5 vehicles, updates arrived at the Socket.IO client in **~14 ms on average** with a p95 of 21 ms.
+- At 50 vehicles (concurrency $\times 10$), median delivery time remained low at **35 ms**, with a p95 of 84 ms and a peak spike of 108 ms during batch flush intervals.
+- The pipeline provides immediate visibility for live vehicle dashboard rendering without perceptual UI lag.
+
