@@ -1,2 +1,13 @@
-{ "name": "fleetdash-simulator", "version": "0.1.0", "type": "module",
-  "scripts": { "start": "node simulator.js", "load": "node loadTest.js" } }
+{
+  "name": "fleetdash-simulator",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "start": "node simulator.js",
+    "load": "node loadTest.js",
+    "probe": "node latencyProbe.js"
+  },
+  "dependencies": {
+    "socket.io-client": "^4.8.4"
+  }
+}
