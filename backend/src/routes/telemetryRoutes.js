@@ -5,14 +5,16 @@ import { requireApiKey } from '../middleware/auth.js';
 import { validateTelemetry } from '../middleware/validate.js';
 import { env } from '../config/env.js';
 
-// Configurable rate limiter on telemetry ingest (configured via env.rateLimitMax)
-const telemetryLimiter = rateLimit({
-  windowMs: env.rateLimitWindowMs,
-  max: env.rateLimitMax,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { error: 'Rate limit exceeded for telemetry ingest' },
-});
+// Configurable rate limiter on telemetry ingest (can be disabled via RATE_LIMIT_ENABLED=false)
+const telemetryLimiter = env.rateLimitEnabled
+  ? rateLimit({
+      windowMs: env.rateLimitWindowMs,
+      max: env.rateLimitMax,
+      standardHeaders: true,
+      legacyHeaders: false,
+      message: { error: 'Rate limit exceeded for telemetry ingest' },
+    })
+  : (req, res, next) => next();
 
 const r = Router();
 r.post('/', telemetryLimiter, requireApiKey, validateTelemetry, ingestTelemetry);

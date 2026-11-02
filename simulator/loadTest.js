@@ -57,7 +57,8 @@ async function runStage(vehicleCount) {
   const latencies = [];
   let totalSent = 0;
   let successful = 0;
-  let failed = 0;
+  let rateLimited429 = 0;
+  let otherErrors = 0;
   let running = true;
 
   // Worker loop for each vehicle
@@ -98,11 +99,13 @@ async function runStage(vehicleCount) {
 
         if (res.status === 200 || res.status === 202) {
           successful += 1;
+        } else if (res.status === 429) {
+          rateLimited429 += 1;
         } else {
-          failed += 1;
+          otherErrors += 1;
         }
       } catch (err) {
-        failed += 1;
+        otherErrors += 1;
       }
     }, INTERVAL_MS);
   });
@@ -119,7 +122,8 @@ async function runStage(vehicleCount) {
 
   const durationSec = STAGE_DURATION_SEC;
   const eventsPerSec = Number((successful / durationSec).toFixed(1));
-  const errorRate = totalSent > 0 ? Number(((failed / totalSent) * 100).toFixed(2)) : 0;
+  const totalErrors = rateLimited429 + otherErrors;
+  const errorRate = totalSent > 0 ? Number(((totalErrors / totalSent) * 100).toFixed(2)) : 0;
   const avgLatency = latencies.length
     ? Number((latencies.reduce((a, b) => a + b, 0) / latencies.length).toFixed(2))
     : 0;
@@ -135,8 +139,10 @@ async function runStage(vehicleCount) {
   return {
     'Vehicles': vehicleCount,
     'Sent': totalSent,
-    'Success': successful,
+    'Accepted': successful,
     'Events/sec': eventsPerSec,
+    '429 Count': rateLimited429,
+    'Other Errors': otherErrors,
     'Error %': `${errorRate}%`,
     'Client Avg (ms)': avgLatency,
     'Client p95 (ms)': p95Latency,
