@@ -1,0 +1,547 @@
+openapi: 3.0.3
+info:
+  title: FleetDash Telemetry API
+  description: >-
+    REST API for the FleetDash event-driven fleet telemetry platform.
+    Handles telemetry ingestion, in-memory vehicle state retrieval, alerts,
+    trips, and live system performance metrics.
+  version: 0.1.0
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+
+paths:
+  /api/health:
+    get:
+      summary: Health & Readiness Probe
+      description: Returns service uptime and MongoDB connection state.
+      responses:
+        '200':
+          description: Service is healthy and MongoDB is connected.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+                  uptimeSeconds:
+                    type: integer
+                    example: 142
+                  mongo:
+                    type: string
+                    example: connected
+                  timestamp:
+                    type: string
+                    format: date-time
+                    example: '2026-10-31T09:00:00.000Z'
+        '503':
+          description: Service unavailable; MongoDB is disconnected or connecting.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/metrics:
+    get:
+      summary: Live Performance Metrics
+      description: Returns event counters, rolling p95 latency, batch queue size, and memory usage.
+      responses:
+        '200':
+          description: Live server telemetry performance metrics.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  uptimeSeconds:
+                    type: integer
+                    example: 360
+                  timestamp:
+                    type: string
+                    format: date-time
+                  counters:
+                    type: object
+                    properties:
+                      eventsReceived:
+                        type: integer
+                      eventsProcessed:
+                        type: integer
+                      eventsIgnored:
+                        type: integer
+                      eventsRejected:
+                        type: integer
+                      errors:
+                        type: integer
+                      droppedEvents:
+                        type: integer
+                  processingTimeMs:
+                    type: object
+                    properties:
+                      avg:
+                        type: number
+                      p95:
+                        type: number
+                      samplesCount:
+                        type: integer
+                  bufferSize:
+                    type: integer
+                  connectedSockets:
+                    type: integer
+                  memory:
+                    type: object
+                    properties:
+                      rssMb:
+                        type: number
+                      heapUsedMb:
+                        type: number
+                      heapTotalMb:
+                        type: number
+
+  /api/vehicles:
+    get:
+      summary: List Vehicles
+      description: Returns all tracked vehicles with their latest in-memory state.
+      responses:
+        '200':
+          description: Array of vehicle state objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehicle'
+    post:
+      summary: Create Vehicle
+      description: Registers a new vehicle in the fleet.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - vehicleId
+                - name
+              properties:
+                vehicleId:
+                  type: string
+                  example: BUS106
+                name:
+                  type: string
+                  example: Express Shuttle 106
+                type:
+                  type: string
+                  example: bus
+                speedLimit:
+                  type: number
+                  example: 80
+      responses:
+        '201':
+          description: Vehicle created successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '400':
+          description: Invalid vehicle data.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Unauthorized; missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: Vehicle already exists.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/vehicles/{id}:
+    get:
+      summary: Get Vehicle by ID
+      description: Returns the latest state for a single vehicle.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: BUS101
+      responses:
+        '200':
+          description: Single vehicle state.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehicle'
+        '404':
+          description: Vehicle not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/vehicles/{id}/telemetry:
+    get:
+      summary: Vehicle Telemetry History
+      description: Returns chronological telemetry points for a vehicle.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: BUS101
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 100
+            minimum: 1
+            maximum: 1000
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Array of telemetry points.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TelemetryPoint'
+
+  /api/vehicles/{id}/trips:
+    get:
+      summary: Vehicle Trip History
+      description: Returns recorded trips for a vehicle.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: BUS101
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 1000
+      responses:
+        '200':
+          description: Array of trip objects.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Trip'
+
+  /api/alerts:
+    get:
+      summary: List Alerts
+      description: Returns fleet alerts filtered by vehicle, type, or resolution state.
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            minimum: 1
+            maximum: 1000
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [OVERSPEED, OFFLINE]
+        - name: vehicleId
+          in: query
+          schema:
+            type: string
+            example: BUS101
+        - name: resolved
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: List of alerts.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Alert'
+
+  /api/alerts/{id}/resolve:
+    patch:
+      summary: Resolve Alert
+      description: Marks an alert as resolved.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          example: 6adb1234567890abcdef1234
+      responses:
+        '200':
+          description: Alert resolved successfully.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Alert'
+        '400':
+          description: Invalid alert ID format.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Alert not found.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/telemetry:
+    post:
+      summary: Ingest Telemetry Event
+      description: Ingests a live vehicle telemetry update into the event pipeline.
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - vehicleId
+                - timestamp
+                - lat
+                - lng
+                - speed
+              properties:
+                vehicleId:
+                  type: string
+                  maxLength: 50
+                  example: BUS101
+                timestamp:
+                  type: string
+                  format: date-time
+                  example: '2026-10-31T09:00:00.000Z'
+                lat:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                  example: 11.6643
+                lng:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+                  example: 78.1460
+                speed:
+                  type: number
+                  minimum: 0
+                  maximum: 300
+                  example: 62.5
+                heading:
+                  type: number
+                  minimum: 0
+                  maximum: 360
+                  example: 180
+                fuelLevel:
+                  type: number
+                  minimum: 0
+                  maximum: 100
+                  example: 90.0
+      responses:
+        '202':
+          description: Telemetry accepted and queued for batch insertion.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                    example: true
+        '200':
+          description: Telemetry ignored (duplicate or out-of-order timestamp).
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ignored:
+                    type: boolean
+                    example: true
+        '400':
+          description: Validation error in request body.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationErrorResponse'
+        '401':
+          description: Missing or invalid API key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Unknown vehicle ID.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  schemas:
+    Vehicle:
+      type: object
+      properties:
+        vehicleId:
+          type: string
+          example: BUS101
+        name:
+          type: string
+          example: Bus 101
+        type:
+          type: string
+          example: bus
+        speedLimit:
+          type: number
+          example: 80
+        status:
+          type: string
+          enum: [online, offline]
+          example: online
+        lastSeen:
+          type: string
+          format: date-time
+        lastLocation:
+          type: object
+          properties:
+            lat:
+              type: number
+            lng:
+              type: number
+        lastSpeed:
+          type: number
+        heading:
+          type: number
+        fuelLevel:
+          type: number
+
+    TelemetryPoint:
+      type: object
+      properties:
+        _id:
+          type: string
+        vehicleId:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        lat:
+          type: number
+        lng:
+          type: number
+        speed:
+          type: number
+        heading:
+          type: number
+        fuelLevel:
+          type: number
+
+    Trip:
+      type: object
+      properties:
+        _id:
+          type: string
+        vehicleId:
+          type: string
+        startTime:
+          type: string
+          format: date-time
+        endTime:
+          type: string
+          format: date-time
+        distanceKm:
+          type: number
+        maxSpeed:
+          type: number
+        status:
+          type: string
+          enum: [active, completed]
+
+    Alert:
+      type: object
+      properties:
+        _id:
+          type: string
+        vehicleId:
+          type: string
+        type:
+          type: string
+          enum: [OVERSPEED, OFFLINE]
+        message:
+          type: string
+        value:
+          type: number
+        limit:
+          type: number
+        resolved:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Error message describing the problem
+
+    ValidationErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        errors:
+          type: array
+          items:
+            type: string
