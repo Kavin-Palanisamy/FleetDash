@@ -24,8 +24,8 @@ export default function Dashboard() {
         {/* <MapView /> */}
         {/* <AlertPanel /> */}
       </div>
-      <h3>Vehicles</h3>
-      <VehicleTable />
+      {/* <h3>Vehicles</h3> */}
+      {/* <VehicleTable /> */}
     </>
   );
 }

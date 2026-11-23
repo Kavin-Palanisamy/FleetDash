@@ -11,7 +11,7 @@ export default function VehicleTable() {
       <tbody>
         {Object.values(vehicles).map((v) => (
           <tr key={v.vehicleId}>
-            <td><Link to={`/vehicles/${v.vehicleId}`}>{v.vehicleId}</Link></td>
+            <td><Link to={`/dashboard/vehicles/${v.vehicleId}`}>{v.vehicleId}</Link></td>
             <td><span className={`badge ${v.status === 'online' ? 'ok' : 'off'}`}>{v.status}</span></td>
             <td><SpeedBadge speed={v.lastSpeed} limit={v.speedLimit} /></td>
             <td>{fmtTime(v.lastSeen || v.timestamp)}</td>

@@ -1238,3 +1238,19 @@
     transition: none;
   }
 }
+
+/* Single-vehicle map (Vehicle Details page) */
+.fd-map--compact {
+  margin: 16px 0 20px;
+}
+.fd-map--compact .fd-map__canvas {
+  height: clamp(300px, 45vh, 440px);
+}
+.fd-map__canvas--empty {
+  display: grid;
+  place-items: center;
+}
+.fd-map__empty--static {
+  position: static;
+  transform: none;
+}

@@ -5,6 +5,7 @@ import { useFleet } from '../context/FleetContext.jsx';
 import TelemetryChart from '../components/TelemetryChart.jsx';
 import TripList from '../components/TripList.jsx';
 import SpeedBadge from '../components/SpeedBadge.jsx';
+import VehicleLocationMap from '../components/VehicleLocationMap.tsx';
 
 export default function VehicleDetails() {
   const { id } = useParams();
@@ -22,6 +23,7 @@ export default function VehicleDetails() {
     <>
       <h2>{id}</h2>
       {v && <p>Status: {v.status} · Speed: <SpeedBadge speed={v.lastSpeed} limit={v.speedLimit} /> · Limit: {v.speedLimit} km/h</p>}
+      <VehicleLocationMap vehicleId={id} />
       <TelemetryChart data={history} />
       <TripList trips={trips} />
     </>
