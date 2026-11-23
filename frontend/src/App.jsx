@@ -6,6 +6,7 @@ import VehicleDetails from './pages/VehicleDetails.jsx';
 import AlertsPage from './pages/AlertsPage.jsx';
 import LoginPage from './components/LoginPage.tsx';
 import SignUpPage from './components/SignUpPage.tsx';
+import Vehicles from './pages/Vehicles.jsx';
 
 const ComingSoon = ({ title }) => <h2>{title}</h2>;
 
@@ -19,7 +20,7 @@ export default function App() {
       <Route element={<AppLayout />}>
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/dashboard/live-tracking" element={<LiveTrackingPage />} />
-        <Route path="/dashboard/vehicles" element={<ComingSoon title="Vehicles" />} />
+       <Route path="/dashboard/vehicles" element={<Vehicles />} />
         <Route path="/dashboard/vehicles/:id" element={<VehicleDetails />} />
         <Route path="/dashboard/alerts" element={<AlertsPage />} />
         <Route path="/dashboard/settings" element={<ComingSoon title="Settings" />} />

@@ -15,7 +15,7 @@ interface VehicleLocation {
   timestamp?: string | number | null;
 }
 
-interface FleetVehicle {
+export interface FleetVehicle {
   vehicleId: string;
   status?: string;
   lastSpeed?: number;
@@ -41,22 +41,22 @@ interface FocusTarget {
 
 const MOVING_MIN_SPEED = 1; // km/h: online and at/above this = "moving"
 
-const STATUS_META: Record<StatusKey, { label: string }> = {
+export const STATUS_META: Record<StatusKey, { label: string }> = {
   moving: { label: "Moving" },
   idle: { label: "Idle" },
   offline: { label: "Offline" },
 };
 
-function getStatus(v: FleetVehicle): StatusKey {
+export function getStatus(v: FleetVehicle): StatusKey {
   if (v.status !== "online") return "offline";
   return Number(v.lastSpeed ?? 0) >= MOVING_MIN_SPEED ? "moving" : "idle";
 }
 
-function isSpeeding(v: FleetVehicle): boolean {
+export function isSpeeding(v: FleetVehicle): boolean {
   return v.speedLimit != null && Number(v.lastSpeed ?? 0) > v.speedLimit;
 }
 
-function getCoords(v: FleetVehicle): [number, number] | null {
+export function getCoords(v: FleetVehicle): [number, number] | null {
   const lat = v.lastLocation?.lat;
   const lng = v.lastLocation?.lng;
   return lat != null && lng != null ? [lat, lng] : null;
@@ -81,7 +81,7 @@ const TRUCK_SVG =
 
 const iconCache = new Map<string, L.DivIcon>();
 
-function getIcon(status: StatusKey, selected: boolean, speeding: boolean): L.DivIcon {
+export function getIcon(status: StatusKey, selected: boolean, speeding: boolean): L.DivIcon {
   const key = `${status}-${selected}-${speeding}`;
   let icon = iconCache.get(key);
   if (!icon) {
@@ -102,7 +102,7 @@ function getIcon(status: StatusKey, selected: boolean, speeding: boolean): L.Div
 /* ------------------- Map helper components (no UI) ------------------- */
 
 /** Keeps Leaflet's size correct when the sidebar or layout resizes. */
-function MapResizer() {
+export function MapResizer() {
   const map = useMap();
 
   useEffect(() => {
@@ -127,7 +127,7 @@ function MapResizer() {
   return null;
 }
 
-interface MapControllerProps {
+export interface MapControllerProps {
   target: FocusTarget | null;
   vehicles: Record<string, FleetVehicle>;
   markerRefs: MutableRefObject<Record<string, L.Marker | null>>;
@@ -172,7 +172,7 @@ interface VehiclePopupProps {
   speeding: boolean;
 }
 
-function VehiclePopupContent({ vehicle, coords, status, speeding }: VehiclePopupProps) {
+export function VehiclePopupContent({ vehicle, coords, status, speeding }: VehiclePopupProps) {
   const updated = getLastUpdated(vehicle);
 
   return (
